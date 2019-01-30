@@ -1,5 +1,11 @@
 package dk.anderslangballe.optimizer;
 
+import dk.anderslangballe.trees.SimpleTree;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class OptimizerResult {
     public String name;
     public String newQuery;

@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class OptimizerResult {
+    private static OptimizerResult _instance;
+
     public String name;
     public String newQuery;
     public SimpleTree plan;
@@ -21,8 +23,19 @@ public class OptimizerResult {
     public List<Map<String, Object>> tuples;
     public Set<String> bindingNames;
 
-    public OptimizerResult(String name) {
+    private OptimizerResult(String name) {
         this.name = name;
+    }
+
+    public static OptimizerResult getInstance() {
+        return OptimizerResult._instance;
+    }
+
+    public OptimizerResult createInstance(String name) {
+        // Overwrites instance if there is already one
+        _instance = new OptimizerResult(name);
+
+        return _instance;
     }
 
     public void evaluateQuery(TupleQuery query) throws QueryEvaluationException {

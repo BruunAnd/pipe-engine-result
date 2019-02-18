@@ -1,21 +1,30 @@
 package dk.anderslangballe.trees;
 
 import com.fluidops.fedx.algebra.*;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.openrdf.model.Value;
 import org.openrdf.query.algebra.*;
-import org.openrdf.query.parser.ParsedTupleQuery;
-import org.openrdf.repository.sail.SailTupleQuery;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SimpleTree {
-    public static SimpleTree fromQuery(SailTupleQuery query) {
-        ParsedTupleQuery parsed = query.getParsedQuery();
-        TupleExpr tupleExpression = parsed.getTupleExpr();
+    public List<String> sources;
 
-        return fromExpr(tupleExpression);
+    public SimpleTree applySources(List<String> sources) {
+        this.sources = sources;
+
+        return this;
+    }
+
+    public SimpleTree applyStatementSources(List<StatementSource> sources) {
+        List<String> stringSources = new ArrayList<>();
+
+        for (StatementSource source : sources) {
+            stringSources.add(source.getEndpointID());
+        }
+
+        return this.applySources(stringSources);
     }
 
     private static SimpleTree joinArguments(List<? extends TupleExpr> args) {
@@ -31,65 +40,63 @@ public abstract class SimpleTree {
         return result;
     }
 
+    public static SimpleTree fromStatementPattern(StatementPattern pattern) {
+        String subject = getVarString(pattern.getSubjectVar());
+        String predicate = getVarString(pattern.getPredicateVar());
+        String object = getVarString(pattern.getObjectVar());
+
+        return new SimpleLeaf(String.format("%s %s %s", subject, predicate, object));
+    }
+
     public static SimpleTree fromExpr(TupleExpr expr) {
         if (expr instanceof Projection) {
             SimpleTree child = fromExpr(((Projection) expr).getArg());
             return new SimpleBranch(NodeType.PROJECTION, child);
         }
 
-        if (expr instanceof NUnion) {
-            NUnion union = (NUnion) expr;
-            SimpleTree[] children = new SimpleTree[union.getNumberOfArguments()];
-
-            for (int i = 0; i < union.getNumberOfArguments(); i++) {
-                children[i] = fromExpr(union.getArg(0));
-            }
-
-            return new SimpleBranch(NodeType.UNION, children);
-        }
-
+        // Handle exclusive groups (group of statements that use the same source(s))
+        // The sources are applied recursively to the children
         if (expr instanceof ExclusiveGroup) {
-            return joinArguments(((ExclusiveGroup) expr).getStatements());
+            return joinArguments(((ExclusiveGroup) expr).getStatements()).applyStatementSources(((ExclusiveGroup) expr).getStatementSources());
         }
 
+        // Handle FedXStatementPattern (these include the getStatementSources method)
+        if (expr instanceof FedXStatementPattern) {
+            return fromStatementPattern((StatementPattern) expr).applyStatementSources(((FedXStatementPattern) expr).getStatementSources());
+        }
+
+        System.out.println("No source treatment of " + expr);
+
+        // Handle simple statement pattern (no sources, but its parent might apply one recursively)
+        if (expr instanceof StatementPattern) {
+            return fromStatementPattern((StatementPattern) expr);
+        }
+
+        // Handle n-ary joins
         if (expr instanceof NJoin) {
             return joinArguments(((NJoin) expr).getArgs());
-            /*SimpleTree result = null;
-            for (ExclusiveStatement statement : group.getStatements()) {
-                if (result == null) {
-                    result = fromExpr(statement);
-                } else {
-                    result = new SimpleBranch(NodeType.JOIN, result, fromExpr(statement));
-                }
-            }
-
-            NJoin join = (NJoin) expr;
-            join.getar
-            SimpleTree result = fromExpr(join.getArg(0));
-
-            for (int i = 1; i < join.getNumberOfArguments(); i++) {
-                result = new SimpleBranch(NodeType.JOIN, result, fromExpr(join.getArg(i)));
-            }
-
-            return result;*/
         }
 
-        if (expr instanceof StatementPattern) {
-            StatementPattern pattern = (StatementPattern) expr;
-
-            String subject = getVarString(pattern.getSubjectVar());
-            String predicate = getVarString(pattern.getPredicateVar());
-            String object = getVarString(pattern.getObjectVar());
-
-            return new SimpleLeaf(String.format("%s %s %s", subject, predicate, object));
-        }
-
+        // Handle binary joins
         if (expr instanceof Join) {
             Join join = (Join) expr;
             return new SimpleBranch(NodeType.JOIN, fromExpr(join.getLeftArg()),
                     fromExpr(join.getRightArg()));
         }
 
+        // Handle n-ary unions
+        if (expr instanceof NUnion) {
+            NUnion union = (NUnion) expr;
+            SimpleTree[] children = new SimpleTree[union.getNumberOfArguments()];
+
+            for (int i = 0; i < union.getNumberOfArguments(); i++) {
+                children[i] = fromExpr(union.getArg(i));
+            }
+
+            return new SimpleBranch(NodeType.UNION, children);
+        }
+
+        // Handle binary unions
         if (expr instanceof Union) {
             Union union = (Union) expr;
             return new SimpleBranch(NodeType.UNION, fromExpr(union.getLeftArg()),
@@ -104,6 +111,7 @@ public abstract class SimpleTree {
 
         if (expr instanceof SingleSourceQuery) {
             try {
+                // This hackjob is needed to read the parsed query field from SingleSourceQuery
                 return fromExpr((TupleExpr) readField(expr, "parsedQuery"));
             } catch (Exception ex) {
                 ex.printStackTrace();

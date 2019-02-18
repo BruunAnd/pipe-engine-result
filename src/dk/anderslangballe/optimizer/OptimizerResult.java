@@ -2,15 +2,14 @@ package dk.anderslangballe.optimizer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.anderslangballe.trees.SimpleTree;
+import info.aduna.iteration.CloseableIteration;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
-import org.openrdf.query.TupleQuery;
-import org.openrdf.query.TupleQueryResult;
-import org.openrdf.repository.sail.SailTupleQuery;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 public class OptimizerResult {
     private static OptimizerResult _instance;
@@ -31,26 +30,19 @@ public class OptimizerResult {
         return OptimizerResult._instance;
     }
 
-    public OptimizerResult createInstance(String name) {
+    public static OptimizerResult createInstance(String name) {
         // Overwrites instance if there is already one
         _instance = new OptimizerResult(name);
 
         return _instance;
     }
 
-    public void evaluateQuery(TupleQuery query) throws QueryEvaluationException {
-        evaluateQuery(query, false);
-    }
+    public CloseableIteration<BindingSet, QueryEvaluationException>
+        evaluationProxy(Callable<CloseableIteration<BindingSet, QueryEvaluationException>> call) throws Exception {
+        System.out.println("Evaluation proxy invoked" );
 
-    public void evaluateQuery(TupleQuery query, boolean subtractPlanningTime) throws QueryEvaluationException {
-        // Set plan
-        if (query instanceof SailTupleQuery) {
-            this.plan = SimpleTree.fromQuery((SailTupleQuery) query);
-        }
-
-        // Evaluate query
         long start = System.currentTimeMillis();
-        TupleQueryResult res = query.evaluate();
+        CloseableIteration<BindingSet, QueryEvaluationException> res = call.call();
         List<Map<String, Object>> tuples = new ArrayList<>();
 
         while (res.hasNext()) {
@@ -74,10 +66,7 @@ public class OptimizerResult {
         this.tuples = tuples;
         this.bindingNames = bindingNames;
 
-        // Subtract planning time from execution time if requested
-        if (subtractPlanningTime) {
-            this.executionTime -= this.planningTime;
-        }
+        return res;
     }
 
     public void saveToFile(String file) throws IOException {

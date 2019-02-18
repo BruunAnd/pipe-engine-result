@@ -1,5 +1,7 @@
 package dk.anderslangballe.trees;
 
+import java.util.List;
+
 public class SimpleBranch extends SimpleTree {
     public SimpleTree[] children;
     public String value;
@@ -18,5 +20,15 @@ public class SimpleBranch extends SimpleTree {
         }
         
         this.children = children;
+    }
+
+    public SimpleTree applySources(List<String> sources) {
+        super.applySources(sources);
+
+        for (SimpleTree child : children) {
+            child.applySources(sources);
+        }
+
+        return this;
     }
 }

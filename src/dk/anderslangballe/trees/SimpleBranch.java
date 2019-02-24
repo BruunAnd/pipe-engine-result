@@ -11,6 +11,9 @@ public class SimpleBranch extends SimpleTree {
             case JOIN:
                 this.value = "\u22C8";
                 break;
+            case LEFT_JOIN:
+                this.value = "\u27d5";
+                break;
             case UNION:
                 this.value = "\u222A";
                 break;

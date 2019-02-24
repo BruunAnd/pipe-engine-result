@@ -8,6 +8,11 @@ import org.openrdf.query.algebra.*;
 public class OpenRdfConverter extends Converter {
     @Override
     public SimpleTree fromExpr(TupleExpr expr) {
+        // Handle query root
+        if (expr instanceof QueryRoot) {
+            return fromExpr(((QueryRoot) expr).getArg());
+        }
+
         // Handle projection
         if (expr instanceof Projection) {
             SimpleTree child = fromExpr(((Projection) expr).getArg());

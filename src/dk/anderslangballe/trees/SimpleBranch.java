@@ -32,8 +32,6 @@ public class SimpleBranch extends SimpleTree {
             }
         }
 
-        System.err.println("dey same");
-
         return true;
     }
 }

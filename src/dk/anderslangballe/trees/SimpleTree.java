@@ -2,7 +2,9 @@ package dk.anderslangballe.trees;
 
 import dk.anderslangballe.trees.converter.FedXConverter;
 import dk.anderslangballe.trees.converter.SemaGrowConverter;
-import dk.anderslangballe.trees.transformer.UnionTransformer;
+import dk.anderslangballe.trees.transformer.CollapseUnionsTransformer;
+import dk.anderslangballe.trees.transformer.CombineSourcesTransformer;
+import dk.anderslangballe.trees.transformer.PropagateSourcesTransformer;
 import org.openrdf.model.Value;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
@@ -27,13 +29,19 @@ public abstract class SimpleTree {
     }
 
     public static SimpleTree fromFedX(TupleExpr expr) {
-        return new FedXConverter().fromExpr(expr);
+        SimpleTree intermediate = new FedXConverter().fromExpr(expr);
+        intermediate = new PropagateSourcesTransformer().transform(intermediate);
+
+        return intermediate;
     }
 
     public static SimpleTree fromSemaGrow(TupleExpr expr) {
         SimpleTree intermediate = new SemaGrowConverter().fromExpr(expr);
+        intermediate = new CollapseUnionsTransformer().transform(intermediate);
+        intermediate = new CombineSourcesTransformer().transform(intermediate);
+        intermediate = new PropagateSourcesTransformer().transform(intermediate);
 
-        return new UnionTransformer().transform(intermediate);
+        return intermediate;
     }
 
     private static String getVarString(org.openrdf.query.algebra.Var var) {

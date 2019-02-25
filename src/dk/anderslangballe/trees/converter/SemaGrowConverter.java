@@ -21,6 +21,9 @@ public class SemaGrowConverter extends OpenRdfConverter {
             return applySources(fromExpr(((SourceQuery) expr).getArg()), ((SourceQuery) expr).getSources());
         }
 
+        // TODO: BindJoin, QueryRoot (maybe not necessary)
+        System.err.println(String.format("No SemaGrow specific handler for class %s", expr.getClass().getName()));
+
         // No SemaGrow specific handler for this node
         return super.fromExpr(expr);
     }

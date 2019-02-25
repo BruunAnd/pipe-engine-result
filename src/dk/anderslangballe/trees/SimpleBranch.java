@@ -4,24 +4,10 @@ import java.util.List;
 
 public class SimpleBranch extends SimpleTree {
     public SimpleTree[] children;
-    public String value;
+    public NodeType value;
 
     public SimpleBranch(NodeType type, SimpleTree ... children) {
-        switch (type) {
-            case JOIN:
-                this.value = "\u22C8";
-                break;
-            case LEFT_JOIN:
-                this.value = "\u27d5";
-                break;
-            case UNION:
-                this.value = "\u222A";
-                break;
-            case PROJECTION:
-                this.value = "\u03C0";
-                break;
-        }
-        
+        this.value = type;
         this.children = children;
     }
 
@@ -33,5 +19,21 @@ public class SimpleBranch extends SimpleTree {
         }
 
         return this;
+    }
+
+    public boolean sameChildren() {
+        if (children.length <= 1) {
+            return true;
+        }
+
+        for (int i = 1; i < children.length; i++) {
+            if (!children[i].equals(children[i - 1])) {
+                return false;
+            }
+        }
+
+        System.err.println("dey same");
+
+        return true;
     }
 }

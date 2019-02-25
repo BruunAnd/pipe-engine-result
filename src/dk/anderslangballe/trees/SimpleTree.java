@@ -1,14 +1,12 @@
 package dk.anderslangballe.trees;
 
-import com.fluidops.fedx.algebra.StatementSource;
 import dk.anderslangballe.trees.converter.FedXConverter;
 import dk.anderslangballe.trees.converter.SemaGrowConverter;
+import dk.anderslangballe.trees.transformer.UnionTransformer;
 import org.openrdf.model.Value;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SimpleTree {
@@ -18,17 +16,6 @@ public abstract class SimpleTree {
         this.sources = sources;
 
         return this;
-    }
-
-    // FedX specific statement sources
-    public SimpleTree applySourcesFedX(List<StatementSource> sources) {
-        List<String> stringSources = new ArrayList<>();
-
-        for (StatementSource source : sources) {
-            stringSources.add(source.getEndpointID());
-        }
-
-        return this.applySources(stringSources);
     }
 
     public static SimpleTree fromStatementPattern(StatementPattern pattern) {
@@ -43,8 +30,10 @@ public abstract class SimpleTree {
         return new FedXConverter().fromExpr(expr);
     }
 
-    private static SimpleTree fromSemaGrow(TupleExpr expr) {
-        return new SemaGrowConverter().fromExpr(expr);
+    public static SimpleTree fromSemaGrow(TupleExpr expr) {
+        SimpleTree intermediate = new SemaGrowConverter().fromExpr(expr);
+
+        return new UnionTransformer().transform(intermediate);
     }
 
     private static String getVarString(org.openrdf.query.algebra.Var var) {

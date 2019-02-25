@@ -7,6 +7,9 @@ import dk.anderslangballe.trees.SimpleTree;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 // The FedX converter is used by Odyssey, FedX and FedX-HiBISCus
 public class FedXConverter extends OpenRdfConverter {
     @Override
@@ -23,12 +26,12 @@ public class FedXConverter extends OpenRdfConverter {
         // Handle exclusive groups (group of statements that use the same source(s))
         // The sources are applied recursively to the children
         if (expr instanceof ExclusiveGroup) {
-            return joinArguments(((ExclusiveGroup) expr).getStatements()).applySourcesFedX(((ExclusiveGroup) expr).getStatementSources());
+            return applySources(joinArguments(((ExclusiveGroup) expr).getStatements()), ((ExclusiveGroup) expr).getStatementSources());
         }
 
         // Handle FedXStatementPattern (these include the getStatementSources method)
         if (expr instanceof FedXStatementPattern) {
-            return SimpleTree.fromStatementPattern((StatementPattern) expr).applySourcesFedX(((FedXStatementPattern) expr).getStatementSources());
+            return applySources(SimpleTree.fromStatementPattern((StatementPattern) expr), ((FedXStatementPattern) expr).getStatementSources());
         }
 
         System.err.println(String.format("No source treatment of %s", expr.getClass().getName()));
@@ -54,5 +57,9 @@ public class FedXConverter extends OpenRdfConverter {
 
         // No FedX handler for this, can possibly be an OpenRDF node
         return super.fromExpr(expr);
+    }
+
+    public SimpleTree applySources(SimpleTree tree, List<StatementSource> sources) {
+        return tree.applySources(sources.stream().map(StatementSource::getEndpointID).collect(Collectors.toList()));
     }
 }

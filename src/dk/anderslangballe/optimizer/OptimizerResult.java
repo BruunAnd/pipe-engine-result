@@ -15,7 +15,6 @@ public class OptimizerResult {
     private static OptimizerResult _instance;
 
     public String name;
-    public String newQuery;
     public SimpleTree plan;
     public long planningTime;
     public long executionTime;

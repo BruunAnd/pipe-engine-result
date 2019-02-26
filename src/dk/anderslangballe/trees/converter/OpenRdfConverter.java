@@ -1,9 +1,13 @@
 package dk.anderslangballe.trees.converter;
 
+import dk.anderslangballe.trees.HoverValueBranch;
 import dk.anderslangballe.trees.NodeType;
 import dk.anderslangballe.trees.SimpleBranch;
 import dk.anderslangballe.trees.SimpleTree;
 import org.openrdf.query.algebra.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OpenRdfConverter extends Converter {
     @Override
@@ -13,10 +17,25 @@ public class OpenRdfConverter extends Converter {
             return fromExpr(((QueryRoot) expr).getArg());
         }
 
+        // Handle filter
+        if (expr instanceof Filter) {
+            List<String> values = new ArrayList<>();
+            ValueExpr condition = ((Filter) expr).getCondition();
+            if (condition instanceof Compare) {
+                values.add(((Compare) condition).getLeftArg().toString());
+                values.add(((Compare) condition).getOperator().getSymbol());
+                values.add(((Compare) condition).getRightArg().toString());
+            } else {
+                System.err.println(String.format("Unknown condition %s", condition.getClass().getName()));
+            }
+
+            return new HoverValueBranch(NodeType.FILTER, values.toArray(new String[0]), fromExpr(((Filter) expr).getArg()));
+        }
+
         // Handle projection
         if (expr instanceof Projection) {
-            SimpleTree child = fromExpr(((Projection) expr).getArg());
-            return new SimpleBranch(NodeType.PROJECTION, child);
+            String[] elements = ((Projection) expr).getProjectionElemList().getElements().stream().map(ProjectionElem::getTargetName).toArray(String[]::new);
+            return new HoverValueBranch(NodeType.PROJECTION, elements, fromExpr(((Projection) expr).getArg()));
         }
 
         // Handle binary joins
@@ -42,7 +61,7 @@ public class OpenRdfConverter extends Converter {
             return SimpleTree.fromStatementPattern((StatementPattern) expr);
         }
 
-        System.err.println(String.format("No OpenRDF conversion of %s", expr.getClass().getName()));
+        System.err.println(String.format("No OpenRDF handler for %s, returning null node", expr.getClass().getName()));
 
         return null;
     }

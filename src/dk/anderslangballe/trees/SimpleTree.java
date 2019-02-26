@@ -2,6 +2,7 @@ package dk.anderslangballe.trees;
 
 import dk.anderslangballe.trees.converter.FedXConverter;
 import dk.anderslangballe.trees.converter.SemaGrowConverter;
+import dk.anderslangballe.trees.converter.SplendidConverter;
 import dk.anderslangballe.trees.transformer.CollapseUnionsTransformer;
 import dk.anderslangballe.trees.transformer.CombineSourcesTransformer;
 import dk.anderslangballe.trees.transformer.PropagateSourcesTransformer;
@@ -28,7 +29,18 @@ public abstract class SimpleTree {
         return new SimpleLeaf(String.format("%s %s %s", subject, predicate, object));
     }
 
+    public static SimpleTree fromSplendid(TupleExpr expr) {
+        System.err.println(expr);
+
+        SimpleTree intermediate = new SplendidConverter().fromExpr(expr);
+        intermediate = new PropagateSourcesTransformer().transform(intermediate);
+
+        return intermediate;
+    }
+
     public static SimpleTree fromFedX(TupleExpr expr) {
+        System.err.println(expr);
+
         SimpleTree intermediate = new FedXConverter().fromExpr(expr);
         intermediate = new PropagateSourcesTransformer().transform(intermediate);
 
@@ -36,6 +48,8 @@ public abstract class SimpleTree {
     }
 
     public static SimpleTree fromSemaGrow(TupleExpr expr) {
+        System.err.println(expr);
+
         SimpleTree intermediate = new SemaGrowConverter().fromExpr(expr);
         intermediate = new CollapseUnionsTransformer().transform(intermediate);
         intermediate = new CombineSourcesTransformer().transform(intermediate);

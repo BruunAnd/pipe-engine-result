@@ -4,9 +4,11 @@ import com.fluidops.fedx.algebra.*;
 import dk.anderslangballe.trees.NodeType;
 import dk.anderslangballe.trees.SimpleBranch;
 import dk.anderslangballe.trees.SimpleTree;
+import org.openrdf.query.algebra.Service;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +16,20 @@ import java.util.stream.Collectors;
 public class FedXConverter extends OpenRdfConverter {
     @Override
     public SimpleTree fromExpr(TupleExpr expr) {
+        // Handle filters
+        if (expr instanceof FilterTuple) {
+            if (((FilterTuple) expr).hasFilter()) {
+                FilterValueExpr valueExpr = ((FilterTuple) expr).getFilterExpr();
+                if (valueExpr instanceof FilterExpr) {
+                    return makeFilter(((FilterExpr) valueExpr).getExpression(), fromExprInner(expr));
+                }
+            }
+        }
+
+        return fromExprInner(expr);
+    }
+
+    private SimpleTree fromExprInner(TupleExpr expr) {
         if (expr instanceof SingleSourceQuery) {
             try {
                 // This hackjob is needed to read the parsed query field from SingleSourceQuery
@@ -32,6 +48,13 @@ public class FedXConverter extends OpenRdfConverter {
         // Handle FedXStatementPattern (these include the getStatementSources method)
         if (expr instanceof FedXStatementPattern) {
             return applySources(SimpleTree.fromStatementPattern((StatementPattern) expr), ((FedXStatementPattern) expr).getStatementSources());
+        }
+
+        // Handle FedXService
+        if (expr instanceof FedXService) {
+            Service service = ((FedXService) expr).getService();
+
+            return fromExpr(service.getArg()).applySources(Collections.singletonList(service.getServiceRef().getValue().stringValue()));
         }
 
         System.err.println(String.format("No source treatment of %s", expr.getClass().getName()));

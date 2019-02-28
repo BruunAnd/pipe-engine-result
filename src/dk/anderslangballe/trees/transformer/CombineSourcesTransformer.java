@@ -26,7 +26,7 @@ public class CombineSourcesTransformer implements Transformer {
                 // Create a new branch with possibly transformed children
                 SimpleTree[] newChildren = Arrays.stream(branch.children).map(this::transform).toArray(SimpleTree[]::new);
 
-                return new SimpleBranch(branch.value, newChildren);
+                return branch.setChildren(newChildren);
             }
         }
 

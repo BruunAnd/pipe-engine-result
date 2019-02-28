@@ -13,7 +13,8 @@ public enum NodeType {
     LEFT_JOIN("\u27d5"),
     PROJECTION("\u03C0"),
     FILTER("\u03C3"),
-    UNION("\u222A");
+    UNION("\u222A"),
+    EMPTY("\u2205");
 
     private String value;
 

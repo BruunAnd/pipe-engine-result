@@ -10,6 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OpenRdfConverter extends Converter {
+
+    public SimpleTree makeFilter(ValueExpr condition, SimpleTree child) {
+        List<String> values = new ArrayList<>();
+        if (condition instanceof Compare) {
+            values.add(((Compare) condition).getLeftArg().toString());
+            values.add(((Compare) condition).getOperator().getSymbol());
+            values.add(((Compare) condition).getRightArg().toString());
+        } else {
+            System.err.println(String.format("Unknown condition %s", condition.getClass().getName()));
+        }
+
+        return new HoverValueBranch(NodeType.FILTER, values.toArray(new String[0]), child);
+    }
+
     @Override
     public SimpleTree fromExpr(TupleExpr expr) {
         // Handle query root
@@ -19,17 +33,7 @@ public class OpenRdfConverter extends Converter {
 
         // Handle filter
         if (expr instanceof Filter) {
-            List<String> values = new ArrayList<>();
-            ValueExpr condition = ((Filter) expr).getCondition();
-            if (condition instanceof Compare) {
-                values.add(((Compare) condition).getLeftArg().toString());
-                values.add(((Compare) condition).getOperator().getSymbol());
-                values.add(((Compare) condition).getRightArg().toString());
-            } else {
-                System.err.println(String.format("Unknown condition %s", condition.getClass().getName()));
-            }
-
-            return new HoverValueBranch(NodeType.FILTER, values.toArray(new String[0]), fromExpr(((Filter) expr).getArg()));
+            return makeFilter(((Filter) expr).getCondition(), fromExpr(((Filter) expr).getArg()));
         }
 
         // Handle projection
@@ -59,6 +63,10 @@ public class OpenRdfConverter extends Converter {
         // Handle simple statement pattern (no sources, but its parent might apply one recursively)
         if (expr instanceof StatementPattern) {
             return SimpleTree.fromStatementPattern((StatementPattern) expr);
+        }
+
+        if (expr instanceof EmptySet) {
+            return new SimpleBranch(NodeType.EMPTY);
         }
 
         System.err.println(String.format("No OpenRDF handler for %s, returning null node", expr.getClass().getName()));

@@ -21,6 +21,12 @@ public class SimpleBranch extends SimpleTree {
         return this;
     }
 
+    public SimpleTree setChildren(SimpleTree[] children) {
+        this.children = children;
+
+        return this;
+    }
+
     public boolean sameChildren() {
         if (children.length <= 1) {
             return true;

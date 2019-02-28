@@ -38,8 +38,6 @@ public class OptimizerResult {
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
         evaluationProxy(Callable<CloseableIteration<BindingSet, QueryEvaluationException>> call) throws Exception {
-        System.out.println("Evaluation proxy invoked" );
-
         long start = System.currentTimeMillis();
         CloseableIteration<BindingSet, QueryEvaluationException> res = call.call();
         List<Map<String, Object>> tuples = new ArrayList<>();

@@ -27,7 +27,7 @@ public class CollapseUnionsTransformer implements Transformer {
                 return new SimpleBranch(NodeType.UNION, newChildren.toArray(new SimpleTree[0]));
             }
 
-            return new SimpleBranch(branch.value, children);
+            return branch.setChildren(children);
         }
 
         return tree;

@@ -33,7 +33,7 @@ public abstract class SimpleTree {
         System.err.println(expr);
 
         SimpleTree intermediate = new SplendidConverter().fromExpr(expr);
-        intermediate = new PropagateSourcesTransformer().transform(intermediate);
+        //intermediate = new PropagateSourcesTransformer().transform(intermediate);
 
         return intermediate;
     }
@@ -42,7 +42,7 @@ public abstract class SimpleTree {
         System.err.println(expr);
 
         SimpleTree intermediate = new FedXConverter().fromExpr(expr);
-        intermediate = new PropagateSourcesTransformer().transform(intermediate);
+        //intermediate = new PropagateSourcesTransformer().transform(intermediate);
 
         return intermediate;
     }
@@ -53,7 +53,7 @@ public abstract class SimpleTree {
         SimpleTree intermediate = new SemaGrowConverter().fromExpr(expr);
         intermediate = new CollapseUnionsTransformer().transform(intermediate);
         intermediate = new CombineSourcesTransformer().transform(intermediate);
-        intermediate = new PropagateSourcesTransformer().transform(intermediate);
+        //intermediate = new PropagateSourcesTransformer().transform(intermediate);
 
         return intermediate;
     }

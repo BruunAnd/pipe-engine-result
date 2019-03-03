@@ -20,20 +20,27 @@ public class OptimizerResult {
     public long executionTime;
     public List<Map<String, Object>> tuples;
     public Set<String> bindingNames;
+    private String file;
 
-    private OptimizerResult(String name) {
+    private OptimizerResult(String name, String file) {
         this.name = name;
+        this.file = file;
     }
 
     public static OptimizerResult getInstance() {
         return OptimizerResult._instance;
     }
 
-    public static OptimizerResult createInstance(String name) {
+    public static OptimizerResult createInstance(String name, String file) {
         // Overwrites instance if there is already one
-        _instance = new OptimizerResult(name);
+        _instance = new OptimizerResult(name, file);
 
         return _instance;
+    }
+
+    public void setPlan(SimpleTree tree) throws IOException {
+        this.plan = tree;
+        this.saveToFile();
     }
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
@@ -62,11 +69,12 @@ public class OptimizerResult {
 
         this.tuples = tuples;
         this.bindingNames = bindingNames;
+        this.saveToFile();
 
         return res;
     }
 
-    public void saveToFile(String file) throws IOException {
+    public void saveToFile() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.writeValue(new File(file), this);
     }

@@ -15,8 +15,10 @@ public class PropagateSourcesTransformer implements Transformer {
             SimpleBranch branch = (SimpleBranch) tree;
 
             // Map children to sources
+            // I removed transform in map as it is incorrect
+            // At the moment, if all children of the root have the same source, we apply that source to the root
             List<List<String>> sources = Arrays.stream(branch.children)
-                                               .map(s -> transform(s).sources)
+                                               .map(s -> s.sources) // .map(s -> transform(s).sources)
                                                .collect(Collectors.toList());
 
             // If the number of distinct sources is the same, then use that source

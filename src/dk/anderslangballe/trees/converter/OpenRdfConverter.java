@@ -21,11 +21,16 @@ public class OpenRdfConverter extends Converter {
             System.err.println(String.format("Unknown condition %s", condition.getClass().getName()));
         }
 
-        return new HoverValueBranch(NodeType.FILTER, values.toArray(new String[0]), child);
+        return new HoverValueBranch(NodeType.FILTER, values.toArray(new String[0]), child).applySources(child.sources);
     }
 
     @Override
     public SimpleTree fromExpr(TupleExpr expr) {
+        // Handle distinct (temporary solution)
+        if (expr instanceof Distinct) {
+            return fromExpr(((Distinct) expr).getArg());
+        }
+
         // Handle query root
         if (expr instanceof QueryRoot) {
             return fromExpr(((QueryRoot) expr).getArg());

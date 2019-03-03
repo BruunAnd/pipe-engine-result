@@ -8,6 +8,7 @@ import org.openrdf.query.algebra.Service;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +34,8 @@ public class FedXConverter extends OpenRdfConverter {
         if (expr instanceof SingleSourceQuery) {
             try {
                 // This hackjob is needed to read the parsed query field from SingleSourceQuery
-                return fromExpr((TupleExpr) readField(expr, "parsedQuery"));
+                List<String> sources = Collections.singletonList(((SingleSourceQuery) expr).getSource().getEndpoint());
+                return fromExpr((TupleExpr) readField(expr, "parsedQuery")).applySources(sources);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -75,8 +77,6 @@ public class FedXConverter extends OpenRdfConverter {
 
             return new SimpleBranch(NodeType.UNION, children);
         }
-
-        // TODO: FedXService
 
         // No FedX handler for this, can possibly be an OpenRDF node
         return super.fromExpr(expr);

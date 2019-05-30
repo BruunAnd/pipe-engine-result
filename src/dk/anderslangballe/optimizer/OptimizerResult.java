@@ -58,7 +58,6 @@ public class OptimizerResult {
             tuples.add(tuple);
         }
 
-        // Set execution time
         this.executionTime = System.currentTimeMillis() - start;
 
         // Get union of binding names

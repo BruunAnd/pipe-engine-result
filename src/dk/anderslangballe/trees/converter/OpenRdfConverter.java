@@ -7,6 +7,7 @@ import dk.anderslangballe.trees.SimpleTree;
 import org.openrdf.query.algebra.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class OpenRdfConverter extends Converter {
@@ -26,6 +27,11 @@ public class OpenRdfConverter extends Converter {
 
     @Override
     public SimpleTree fromExpr(TupleExpr expr) {
+        // Handle service
+        if (expr instanceof Service) {
+            return fromExpr(((Service) expr).getArg()).applySources(Collections.singletonList(((Service) expr).getBaseURI()));
+        }
+
         // Handle distinct (temporary solution)
         if (expr instanceof Distinct) {
             return fromExpr(((Distinct) expr).getArg());
